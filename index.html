@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Yeni Yıl Demo</title>
+
+<!-- GSAP -->
+<script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
+
+<style>
+body {
+  margin: 0;
+  background: radial-gradient(circle, #001f3f, #000);
+  height: 100vh;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+#startBtn {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 16px 32px;
+  font-size: 20px;
+  background: gold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  z-index: 100;
+}
+
+#endMessage {
+  position: fixed;
+  top: 15%;
+  width: 100%;
+  text-align: center;
+  font-size: 48px;
+  color: gold;
+  opacity: 0;
+  text-shadow: 0 0 15px red, 0 0 25px green;
+}
+</style>
+</head>
+
+<body>
+
+<button id="startBtn">Demoyu Başlat</button>
+<div id="endMessage">🎉 Yeni Yılınız Kutlu Olsun 🎉</div>
+
+<audio id="bgMusic" loop>
+  <!-- KENDİ MP3'ÜNÜ SONRA EKLERSİN -->
+</audio>
+
+<script>
+/* =========================
+   KAR YAĞIŞI
+========================= */
+const snowCanvas = document.createElement("canvas");
+const sctx = snowCanvas.getContext("2d");
+document.body.appendChild(snowCanvas);
+
+snowCanvas.style.position = "fixed";
+snowCanvas.style.top = 0;
+snowCanvas.style.left = 0;
+snowCanvas.style.pointerEvents = "none";
+snowCanvas.style.zIndex = 5;
+
+function resizeSnow() {
+  snowCanvas.width = innerWidth;
+  snowCanvas.height = innerHeight;
+}
+resizeSnow();
+addEventListener("resize", resizeSnow);
+
+const flakes = Array.from({length:120}, () => ({
+  x: Math.random() * innerWidth,
+  y: Math.random() * innerHeight,
+  r: Math.random() * 3 + 1,
+  d: Math.random() + 0.5
+}));
+
+(function snow() {
+  sctx.clearRect(0,0,snowCanvas.width,snowCanvas.height);
+  sctx.fillStyle = "rgba(255,255,255,0.8)";
+  sctx.beginPath();
+  flakes.forEach(f=>{
+    sctx.moveTo(f.x,f.y);
+    sctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    f.y += f.d;
+    if(f.y > innerHeight){
+      f.y = -10;
+      f.x = Math.random() * innerWidth;
+    }
+  });
+  sctx.fill();
+  requestAnimationFrame(snow);
+})();
+</script>
+
+<script>
+/* =========================
+   HAVAİ FİŞEK
+========================= */
+const fwCanvas = document.createElement("canvas");
+const fctx = fwCanvas.getContext("2d");
+
+fwCanvas.style.position = "fixed";
+fwCanvas.style.top = 0;
+fwCanvas.style.left = 0;
+fwCanvas.style.pointerEvents = "none";
+fwCanvas.style.zIndex = 20;
+
+function resizeFW(){
+  fwCanvas.width = innerWidth;
+  fwCanvas.height = innerHeight;
+}
+
+class Firework {
+  constructor(){
+    this.x = Math.random()*fwCanvas.width;
+    this.y = fwCanvas.height;
+    this.target = Math.random()*fwCanvas.height*0.5;
+    this.parts = [];
+    this.done = false;
+  }
+  update(){
+    if(this.y > this.target){
+      this.y -= 8;
+    } else if(!this.done){
+      this.done = true;
+      for(let i=0;i<40;i++){
+        this.parts.push({
+          x:this.x,
+          y:this.y,
+          vx:(Math.random()-0.5)*6,
+          vy:(Math.random()-0.5)*6,
+          life:60
+        });
+      }
+    }
+    this.parts.forEach(p=>{
+      p.x+=p.vx;
+      p.y+=p.vy;
+      p.life--;
+    });
+  }
+  draw(){
+    fctx.fillStyle="rgba(255,255,255,1)";
+    if(!this.done){
+    fctx.beginPath();
+fctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+fctx.fill();
+    } else {
+      this.parts.forEach(p=>{
+        fctx.globalAlpha=p.life/60;
+        fctx.fillRect(p.x,p.y,3,3);
+      });
+      fctx.globalAlpha=1;
+    }
+  }
+}
+
+let fireworks=[], startTime=0;
+
+function animateFW(){
+  fctx.clearRect(0,0,fwCanvas.width,fwCanvas.height);
+  if(Math.random()<0.1) fireworks.push(new Firework());
+  fireworks.forEach(f=>{f.update();f.draw();});
+  fireworks = fireworks.filter(f=>f.parts.some(p=>p.life>0));
+  if(Date.now()-startTime<5000){
+    requestAnimationFrame(animateFW);
+  } else {
+    fwCanvas.remove();
+    showFinal();
+  }
+}
+
+function startFireworks(){
+  document.body.appendChild(fwCanvas);
+  resizeFW();
+  startTime = Date.now();
+  animateFW();
+}
+</script>
+
+<script>
+/* =========================
+   BUTON + SON
+========================= */
+const btn = document.getElementById("startBtn");
+btn.onclick = ()=>{
+  btn.remove();
+  startFireworks();
+};
+
+function showFinal(){
+  gsap.to("#endMessage",{opacity:1,duration:2});
+}
+</script>
+
+</body>
+</html>
